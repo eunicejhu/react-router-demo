@@ -3,10 +3,13 @@ import {
   BrowserRouter as Router,
   Switch,
   Route,
+  NavLink,
   Link,
   Redirect,
   useHistory,
-  useLocation
+  useLocation,
+  useRouteMatch,
+  useParams
 } from "react-router-dom";
 
 // This example has 3 pages: a public page, a protected
@@ -29,7 +32,7 @@ export default function AuthExample() {
   const authenticate = (cb) => {
     setTimeout(() => {
       setIsAuthenticated(true);
-      cb();
+      cb && cb();
     }, 100);
   };
   const signout = (cb) => {
@@ -121,20 +124,62 @@ function ProtectedPage() {
 }
 
 function LoginPage({ authenticate }) {
-  let history = useHistory();
   let location = useLocation();
+  let { path, url } = useRouteMatch();
 
   let { from } = location.state || { from: { pathname: "/" } };
-  let login = () => {
-    authenticate(() => {
-      history.replace(from);
-    });
-  };
-
   return (
     <div>
+      <ul>
+        <li>
+          <NavLink to={`${url}/github`}>Login with Github</NavLink>
+        </li>
+        <li>
+          {" "}
+          <NavLink to={`${url}/facebook`}>Login with Facebook</NavLink>
+        </li>
+      </ul>
       <p>You must log in to view the page at {from.pathname}</p>
-      <button onClick={login}>Log in</button>
+      <Switch>
+        <Route path={`${path}/github`}>
+          <GithubLogin authenticate={authenticate} />
+        </Route>
+        <Route path={`${path}/facebook`} from={from}>
+          <FacebookLogin authenticate={authenticate} />
+        </Route>
+      </Switch>
     </div>
+  );
+}
+
+function GithubLogin({ authenticate }) {
+  const history = useHistory();
+  return (
+    <button
+      onClick={() => {
+        authenticate(() => {
+          history.go(-1);
+          history.replace("/protected");
+        });
+      }}
+    >
+      Login with Github
+    </button>
+  );
+}
+function FacebookLogin({ authenticate }) {
+  const history = useHistory();
+
+  return (
+    <button
+      onClick={() => {
+        authenticate(() => {
+          history.go(-1);
+          history.replace("/protected");
+        });
+      }}
+    >
+      Login with Facebook
+    </button>
   );
 }
